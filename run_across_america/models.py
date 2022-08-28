@@ -21,6 +21,8 @@ class Goal:
     start_date: datetime
     end_date: datetime
 
+    progress: Optional[float] = None
+
 
 @dataclass
 class Member:
@@ -39,7 +41,6 @@ class MemberStats(Member):
     rank: int
 
     units: str = "Kilometers"
-
 
 
 @dataclass

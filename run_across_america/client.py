@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, Iterator, List
+from typing import Any, Dict, Iterator, List, Optional
 from requests import Session, Response
 
 from .models import Goal, Member, MemberStats, Team, Activity
@@ -66,11 +66,15 @@ class RunAcrossAmerica:
                 member_count=int(item.get("memberCount", "0")),
             )
 
-    def goals(self, team_id: str) -> Goal:
+    def goals(self, team_id: str, include_progress: bool = True) -> Goal:
         url: str = f"{self.BASE_URL}/raceteams/{team_id}/goals"
         resp: Response = self.session.get(url)
-
         data = resp.json().get("team_goal")
+
+        progress: Optional[float] = None
+        if include_progress:
+            progress = self.goal_progress(team_id)
+
         return Goal(
             team_id=data.get("race_team_id"),
             distance=data.get("distance"),
@@ -81,12 +85,18 @@ class RunAcrossAmerica:
             end_date=datetime.strptime(
                 data.get("end_date", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
             ),
+            progress=progress,
         )
+
+    def goal_progress(self, team_id: str) -> float:
+        url: str = f"{self.BASE_URL}/raceteams/{team_id}/cumulativedistance"
+        resp: Response = self.session.get(url)
+        return resp.json().get("distance")
 
     def members(self, team_id: str) -> Iterator[Member]:
         url: str = f"{self.BASE_URL}/raceteams/{team_id}/members?limit=1000&offset=0"
         resp: Response = self.session.get(url)
-        
+
         for item in resp.json():
             yield Member(
                 id=item.get("user_id"),
@@ -102,7 +112,7 @@ class RunAcrossAmerica:
         resp: Response = self.session.get(url)
 
         data = resp.json()
-        for idx,item in enumerate(data.get("user_distances")):
+        for idx, item in enumerate(data.get("user_distances")):
             yield MemberStats(
                 id=item.get("user_id"),
                 first_name=item.get("first_name"),

@@ -72,7 +72,7 @@ def main() -> None:
         exit(1)
 
     if args.goals:
-        goal: Goal = client.goals(team.id)
+        goal: Goal = client.goals(team.id, include_progress=True)
         print(goal)
 
     elif args.members:
