@@ -14,43 +14,40 @@ def main() -> None:
         help="User invitation code emailed after sign-up.",
     )
 
-    mut = parser.add_mutually_exclusive_group()
-    mut.add_argument(
+    must_specify_one = parser.add_mutually_exclusive_group()
+    must_specify_one.add_argument(
         "--teams",
         action="store_true",
         help="Get all available teams for the current user.",
     )
-    mut.add_argument(
+    must_specify_one.add_argument(
         "team_name",
         nargs="?",
         help="Team name, not case sensitive.",
     )
 
-    subparsers = parser.add_subparsers(dest="command")
-
-    team_goals_parser = subparsers.add_parser(
-        "goals",
+    parser.add_argument(
+        "--goals",
+        action="store_true",
         help="Get the distance goal for the specified team.",
     )
-
-    members_parser = subparsers.add_parser(
-        "members",
+    parser.add_argument(
+        "--members",
+        action="store_true",
         help="Get all the members of the specified team.",
     )
-
-    leaderboard_parser = subparsers.add_parser(
-        "leaderboard",
+    parser.add_argument(
+        "--leaderboard",
+        action="store_true",
         help="Get all current leaderboard of the specified team.",
     )
-
-    feed_parser = subparsers.add_parser(
-        "feed",
+    parser.add_argument(
+        "--feed",
+        action="store_true",
         help="Get the current feed of the specified team.",
     )
 
-
     args = parser.parse_args()
-
 
     client = RunAcrossAmerica(args.user_code)
 
@@ -65,16 +62,13 @@ def main() -> None:
         print("Must specify a team name!")
         exit(1)
 
-
     team_name: str = args.team_name.lower()
 
     def filter_team_name(item: Dict[str, Any], needle: str) -> bool:
         name: str = item.get("team", {}).get("name", "")
         return name.lower() == needle
 
-    team: Dict[str, Any] = next(
-        filter(lambda t: filter_team_name(t, team_name), teams)
-    )
+    team: Dict[str, Any] = next(filter(lambda t: filter_team_name(t, team_name), teams))
 
     if not team:
         print(f"Error: Unable to find team with name: {args.team_name}")
@@ -83,27 +77,27 @@ def main() -> None:
             print("\t", team.get("team", {}).get("name"))
         exit(1)
 
-
     team_id: str = team.get("team", {}).get("id")
 
-    if args.command == "goals":
+    if args.goals:
         goal: Dict[str, Any] = client.goals(team_id)
         print(goal)
 
-    elif args.command == "members":
+    elif args.members:
         members: List[Dict[str, Any]] = client.members(team_id)
         for member in members:
             print(member)
 
-    elif args.command == "leaderboard":
+    elif args.leaderboard:
         leaderboard: List[Dict[str, Any]] = client.leaderboard(team_id)
         for pos, member in enumerate(leaderboard):
             print(f"#{pos + 1}", member)
 
-    elif args.command == "feed":
+    elif args.feed:
         feed: List[Dict[str, Any]] = client.feed(team_id)
         for activity in feed:
             print(activity)
+
 
 if __name__ == "__main__":
     main()
