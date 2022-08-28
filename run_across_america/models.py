@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Optional
 
 
 @dataclass
@@ -24,9 +25,21 @@ class Goal:
 @dataclass
 class Member:
     id: str
-    email: str
     first_name: str
     last_name: str
+    email: Optional[str]
+
+
+@dataclass
+class MemberStats(Member):
+    icon: str
+    distance: float
+
+    team_id: str
+    rank: int
+
+    units: str = "Kilometers"
+
 
 
 @dataclass

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Iterator, List
 from requests import Session, Response
 
-from .models import Goal, Member, Team, Activity
+from .models import Goal, Member, MemberStats, Team, Activity
 
 
 class RunAcrossAmerica:
@@ -95,14 +95,24 @@ class RunAcrossAmerica:
                 last_name=item.get("last_name"),
             )
 
-    def leaderboard(self, team_id: str) -> List[Dict[str, Any]]:
+    def leaderboard(self, team_id: str) -> List[MemberStats]:
         url: str = (
             f"{self.BASE_URL}/teams/{team_id}/goalleaderboard?limit=1000&offset=0"
         )
         resp: Response = self.session.get(url)
 
-        j = resp.json()
-        return j.get("user_distances")
+        data = resp.json()
+        for idx,item in enumerate(data.get("user_distances")):
+            yield MemberStats(
+                id=item.get("user_id"),
+                first_name=item.get("first_name"),
+                last_name=item.get("last_name"),
+                email=None,
+                distance=item.get("sum"),
+                icon=item.get("profile_photo_link"),
+                team_id=team_id,
+                rank=idx + 1,
+            )
 
     def feed(self, team_id: str) -> Iterator[Activity]:
         url: str = f"{self.BASE_URL}/raceteams/{team_id}/feed?limit=1000&offset=0"

@@ -2,6 +2,7 @@ import argparse
 from typing import Any, Dict, List
 
 from run_across_america import RunAcrossAmerica, Team, Activity, Goal, Member
+from run_across_america.models import MemberStats
 
 
 def main() -> None:
@@ -80,9 +81,9 @@ def main() -> None:
             print(member)
 
     elif args.leaderboard:
-        leaderboard: List[Dict[str, Any]] = client.leaderboard(team.id)
-        for pos, member in enumerate(leaderboard):
-            print(f"#{pos + 1}", member)
+        leaderboard: List[MemberStats] = client.leaderboard(team.id)
+        for member in leaderboard:
+            print(f"#{member.rank}", member)
 
     elif args.feed:
         feed: List[Activity] = list(client.feed(team.id))
