@@ -1,13 +1,7 @@
 import argparse
 from typing import Any, Dict, List
 
-from run_across_america import RunAcrossAmerica, Team
-
-
-def filter_team_name(haystack: List[Team], needle: str) -> Team:
-    for team in haystack:
-        if team.name.lower() == needle:
-            return team
+from run_across_america import RunAcrossAmerica, Team, Activity, Goal
 
 
 def main() -> None:
@@ -56,7 +50,7 @@ def main() -> None:
 
     client = RunAcrossAmerica(args.user_code)
 
-    teams: List[Team] = client.teams()
+    teams: List[Team] = list(client.teams())
 
     if args.teams:
         for team in teams:
@@ -77,7 +71,7 @@ def main() -> None:
         exit(1)
 
     if args.goals:
-        goal: Dict[str, Any] = client.goals(team.id)
+        goal: Goal = client.goals(team.id)
         print(goal)
 
     elif args.members:
@@ -91,7 +85,7 @@ def main() -> None:
             print(f"#{pos + 1}", member)
 
     elif args.feed:
-        feed: List[Dict[str, Any]] = client.feed(team.id)
+        feed: List[Activity] = list(client.feed(team.id))
         for activity in feed:
             print(activity)
 

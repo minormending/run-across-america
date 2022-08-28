@@ -1,8 +1,8 @@
-from datetime import datetime
-from typing import Any, Dict, Iterable, List
+from datetime import datetime, timedelta
+from typing import Any, Dict, Iterator, List
 from requests import Session, Response
 
-from run_across_america.models import Team
+from .models import Goal, Team, Activity
 
 
 class RunAcrossAmerica:
@@ -47,7 +47,7 @@ class RunAcrossAmerica:
             self.__setup_user_details()
         return self._user_id
 
-    def teams(self) -> Iterable[Team]:
+    def teams(self) -> Iterator[Team]:
         url: str = f"{self.BASE_URL}/users/{self._get_user_id()}/raceteams"
         resp: Response = self.session.get(url)
 
@@ -66,12 +66,22 @@ class RunAcrossAmerica:
                 member_count=int(item.get("memberCount", "0")),
             )
 
-    def goals(self, team_id: str) -> Dict[str, Any]:
+    def goals(self, team_id: str) -> Goal:
         url: str = f"{self.BASE_URL}/raceteams/{team_id}/goals"
         resp: Response = self.session.get(url)
 
-        j = resp.json()
-        return j.get("team_goal")
+        data = resp.json().get("team_goal")
+        return Goal(
+            team_id=data.get("race_team_id"),
+            distance=data.get("distance"),
+            units=data.get("distance_units"),
+            start_date=datetime.strptime(
+                data.get("start_date", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
+            ),
+            end_date=datetime.strptime(
+                data.get("end_date", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
+            ),
+        )
 
     def members(self, team_id: str) -> List[Dict[str, Any]]:
         url: str = f"{self.BASE_URL}/raceteams/{team_id}/members?limit=1000&offset=0"
@@ -87,7 +97,7 @@ class RunAcrossAmerica:
         j = resp.json()
         return j.get("user_distances")
 
-    def feed(self, team_id: str) -> List[Dict[str, Any]]:
+    def feed(self, team_id: str) -> Iterator[Activity]:
         url: str = f"{self.BASE_URL}/raceteams/{team_id}/feed?limit=1000&offset=0"
         headers: Dict[str, str] = {
             "content-type": "application/json",
@@ -104,5 +114,19 @@ class RunAcrossAmerica:
         }
         resp: Response = self.session.post(url, json=payload, headers=headers)
 
-        j = resp.json()
-        return j.get("runs")
+        data = resp.json()
+        for item in data.get("runs"):
+            yield Activity(
+                name=item.get("activity_name"),
+                type=item.get("activity_type"),
+                distance=float(item.get("distance_ran")),
+                units=item.get("distance_units"),
+                duration=timedelta(milliseconds=int(item.get("run_time"))),
+                time_completed=datetime.strptime(
+                    item.get("time_completed_at"), "%Y-%m-%dT%H:%M:%S.%fZ"
+                ),
+                user_id=item.get("user_id"),
+                user_first_name=item.get("first_name"),
+                user_last_name=item.get("last_name"),
+                user_icon=item.get("profile_photo_link"),
+            )
