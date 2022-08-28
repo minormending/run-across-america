@@ -1,7 +1,7 @@
 import argparse
 from typing import Any, Dict, List
 
-from run_across_america import RunAcrossAmerica, Team, Activity, Goal
+from run_across_america import RunAcrossAmerica, Team, Activity, Goal, Member
 
 
 def main() -> None:
@@ -62,7 +62,7 @@ def main() -> None:
         exit(1)
     team_name: str = args.team_name.lower()
 
-    team: Dict[str, Any] = next(filter(lambda t: t.name.lower() == team_name, teams))
+    team: Team = next(filter(lambda t: t.name.lower() == team_name, teams))
     if not team:
         print(f"Error: Unable to find team with name: {args.team_name}")
         print("Available team names are:")
@@ -75,7 +75,7 @@ def main() -> None:
         print(goal)
 
     elif args.members:
-        members: List[Dict[str, Any]] = client.members(team.id)
+        members: List[Member] = list(client.members(team.id))
         for member in members:
             print(member)
 

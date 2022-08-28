@@ -22,6 +22,14 @@ class Goal:
 
 
 @dataclass
+class Member:
+    id: str
+    email: str
+    first_name: str
+    last_name: str
+
+
+@dataclass
 class Activity:
     name: str
     type: str
