@@ -5,6 +5,12 @@ from typing import Any, Dict, List
 from run_across_america import RunAcrossAmerica
 
 
+def filter_team_name(haystack: List[Dict[str, Any]], needle: str) -> Dict[str, Any]:
+    for item in haystack:
+        name: str = item.get("team", {}).get("name", "")
+        if name.lower() == needle:
+            return item
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Lookup info from `Run Across America`."
@@ -63,13 +69,8 @@ def main() -> None:
         exit(1)
 
     team_name: str = args.team_name.lower()
-
-    def filter_team_name(item: Dict[str, Any], needle: str) -> bool:
-        name: str = item.get("team", {}).get("name", "")
-        return name.lower() == needle
-
-    team: Dict[str, Any] = next(filter(lambda t: filter_team_name(t, team_name), teams))
-
+    
+    team: Dict[str, Any] = filter_team_name(teams, team_name)
     if not team:
         print(f"Error: Unable to find team with name: {args.team_name}")
         print("Available team names are:")
