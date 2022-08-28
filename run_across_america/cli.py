@@ -1,15 +1,15 @@
 import argparse
-from pydoc import cli
 from typing import Any, Dict, List
+from unicodedata import name
 
-from run_across_america import RunAcrossAmerica
+from run_across_america import RunAcrossAmerica, Team
 
 
-def filter_team_name(haystack: List[Dict[str, Any]], needle: str) -> Dict[str, Any]:
-    for item in haystack:
-        name: str = item.get("team", {}).get("name", "")
-        if name.lower() == needle:
-            return item
+def filter_team_name(haystack: List[Team], needle: str) -> Team:
+    for team in haystack:
+        if team.name.lower() == needle:
+            return team
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -57,7 +57,7 @@ def main() -> None:
 
     client = RunAcrossAmerica(args.user_code)
 
-    teams: List[Dict[str, Any]] = client.teams()
+    teams: List[Team] = client.teams()
 
     if args.teams:
         for team in teams:
@@ -67,10 +67,9 @@ def main() -> None:
     if not args.team_name:
         print("Must specify a team name!")
         exit(1)
-
     team_name: str = args.team_name.lower()
-    
-    team: Dict[str, Any] = filter_team_name(teams, team_name)
+
+    team: Dict[str, Any] = next(filter(lambda t: t.name.lower() == team_name, teams))
     if not team:
         print(f"Error: Unable to find team with name: {args.team_name}")
         print("Available team names are:")
@@ -78,24 +77,22 @@ def main() -> None:
             print("\t", team.get("team", {}).get("name"))
         exit(1)
 
-    team_id: str = team.get("team", {}).get("id")
-
     if args.goals:
-        goal: Dict[str, Any] = client.goals(team_id)
+        goal: Dict[str, Any] = client.goals(team.id)
         print(goal)
 
     elif args.members:
-        members: List[Dict[str, Any]] = client.members(team_id)
+        members: List[Dict[str, Any]] = client.members(team.id)
         for member in members:
             print(member)
 
     elif args.leaderboard:
-        leaderboard: List[Dict[str, Any]] = client.leaderboard(team_id)
+        leaderboard: List[Dict[str, Any]] = client.leaderboard(team.id)
         for pos, member in enumerate(leaderboard):
             print(f"#{pos + 1}", member)
 
     elif args.feed:
-        feed: List[Dict[str, Any]] = client.feed(team_id)
+        feed: List[Dict[str, Any]] = client.feed(team.id)
         for activity in feed:
             print(activity)
 
