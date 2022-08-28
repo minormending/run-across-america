@@ -1,6 +1,5 @@
 import argparse
 from typing import Any, Dict, List
-from unicodedata import name
 
 from run_across_america import RunAcrossAmerica, Team
 

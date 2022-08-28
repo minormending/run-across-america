@@ -1,6 +1,8 @@
-from typing import Any, Dict, List
+from datetime import datetime
+from typing import Any, Dict, Iterable, List
 from requests import Session, Response
 
+from run_across_america.models import Team
 
 
 class RunAcrossAmerica:
@@ -45,12 +47,24 @@ class RunAcrossAmerica:
             self.__setup_user_details()
         return self._user_id
 
-    def teams(self) -> List[Dict[str, Any]]:
+    def teams(self) -> Iterable[Team]:
         url: str = f"{self.BASE_URL}/users/{self._get_user_id()}/raceteams"
         resp: Response = self.session.get(url)
 
-        j = resp.json()
-        return j.get("race_teams", [])
+        data = resp.json()
+        for item in data.get("race_teams", []):
+            inner: Dict[str, Any] = item.get("team", {})
+
+            yield Team(
+                id=inner.get("id"),
+                name=inner.get("name"),
+                code=inner.get("code"),
+                icon=inner.get("icon"),
+                created=datetime.strptime(
+                    inner.get("creation_time", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
+                ),
+                member_count=int(item.get("memberCount", "0")),
+            )
 
     def goals(self, team_id: str) -> Dict[str, Any]:
         url: str = f"{self.BASE_URL}/raceteams/{team_id}/goals"
