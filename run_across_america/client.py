@@ -80,7 +80,11 @@ class RunAcrossAmerica:
         }
         payload: Dict[str, str] = {
             "filters": {
-                "feed_type": {"plans": False, "activities": True, "achievements": False},
+                "feed_type": {
+                    "plans": False,
+                    "activities": True,
+                    "achievements": False,
+                },
                 "activities": {"all": True, "description_or_selfie_only": None},
             }
         }
