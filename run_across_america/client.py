@@ -8,9 +8,7 @@ from .models import Goal, Member, MemberStats, Team, Activity
 class RunAcrossAmerica:
     BASE_URL: str = "https://runprod.cockpitmobile.com"
 
-    def __init__(self, user_code: str) -> None:
-        self.user_code = user_code
-
+    def __init__(self) -> None:
         self.session = Session()
         self.session.headers = {
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_2_2 like Mac OS X) AppleWebKit/604.4.7 (KHTML, like Gecko) Mobile/15C202",
@@ -19,36 +17,23 @@ class RunAcrossAmerica:
             "ios-version": "1.0.74",
         }
 
-        self._token: str = None
-        self._user_id: str = None
 
-    def _authenticate(self) -> Dict[str, Any]:
+    def _authenticate(self, user_code: str) -> Dict[str, Any]:
         url: str = f"{self.BASE_URL}/authenticate"
         headers: Dict[str, str] = {
             "content-type": "application/json",
         }
-        payload: Dict[str, str] = {"email": "", "password": self.user_code}
+        payload: Dict[str, str] = {"email": "", "password": user_code}
 
         resp: Response = self.session.post(url, json=payload, headers=headers)
         return resp.json()
 
-    def __setup_user_details(self) -> None:
-        resp: Dict[str, Any] = self._authenticate()
-        self._token = resp.get("token")
-        self._user_id = resp.get("user", {}).get("id")
+    def user_id(self, user_code: str) -> str:
+        resp: Dict[str, Any] = self._authenticate(user_code)
+        return resp.get("user", {}).get("id")
 
-    def _bearer_token(self) -> str:
-        if not self._token:
-            self.__setup_user_details()
-        return self._token
-
-    def _get_user_id(self) -> str:
-        if not self._user_id:
-            self.__setup_user_details()
-        return self._user_id
-
-    def teams(self) -> Iterator[Team]:
-        url: str = f"{self.BASE_URL}/users/{self._get_user_id()}/raceteams"
+    def teams(self, user_id: str) -> Iterator[Team]:
+        url: str = f"{self.BASE_URL}/users/{user_id}/raceteams"
         resp: Response = self.session.get(url)
 
         data = resp.json()

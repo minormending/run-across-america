@@ -1,5 +1,5 @@
 import argparse
-from typing import Any, Dict, List
+from typing import List
 
 from run_across_america import RunAcrossAmerica, Team, Activity, Goal, Member
 from run_across_america.models import MemberStats
@@ -9,84 +9,77 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Lookup info from `Run Across America`."
     )
-    parser.add_argument(
+
+    subparsers = parser.add_subparsers(dest="command")
+
+    user_id_parser = subparsers.add_parser(
+        "user_id",
+        help="Get the `user_id` for the user code.",
+    )
+    user_id_parser.add_argument(
         "user_code",
         help="User invitation code emailed after sign-up.",
     )
 
-    must_specify_one = parser.add_mutually_exclusive_group()
-    must_specify_one.add_argument(
-        "--teams",
-        action="store_true",
-        help="Get all available teams for the current user.",
+    teams_parser = subparsers.add_parser(
+        "teams",
+        help="Get all the teams known to a user.",
     )
-    must_specify_one.add_argument(
-        "team_name",
-        nargs="?",
-        help="Team name, not case sensitive.",
-    )
+    teams_parser.add_argument("user_id")
 
-    parser.add_argument(
-        "--goals",
-        action="store_true",
+    team_goals_parser = subparsers.add_parser(
+        "goals",
         help="Get the distance goal for the specified team.",
     )
-    parser.add_argument(
-        "--members",
-        action="store_true",
+    team_goals_parser.add_argument("team_id")
+
+    members_parser = subparsers.add_parser(
+        "members",
         help="Get all the members of the specified team.",
     )
-    parser.add_argument(
-        "--leaderboard",
-        action="store_true",
+    members_parser.add_argument("team_id")
+
+    leaderboard_parser = subparsers.add_parser(
+        "leaderboard",
         help="Get all current leaderboard of the specified team.",
     )
-    parser.add_argument(
-        "--feed",
-        action="store_true",
+    leaderboard_parser.add_argument("team_id")
+
+    feed_parser = subparsers.add_parser(
+        "feed",
         help="Get the current feed of the specified team.",
     )
+    feed_parser.add_argument("team_id")
 
     args = parser.parse_args()
 
-    client = RunAcrossAmerica(args.user_code)
+    client = RunAcrossAmerica()
 
-    teams: List[Team] = list(client.teams())
+    if args.command == "user_id":
+        user_id: str = client.user_id(args.user_code)
+        print(user_id)
 
-    if args.teams:
+    elif args.command == "teams":
+        teams: List[Team] = list(client.teams(args.user_id))
         for team in teams:
             print(team)
-        exit(0)
 
-    if not args.team_name:
-        print("Must specify a team name!")
-        exit(1)
-    team_name: str = args.team_name.lower()
-
-    team: Team = next(filter(lambda t: t.name.lower() == team_name, teams))
-    if not team:
-        print(f"Error: Unable to find team with name: {args.team_name}")
-        print("Available team names are:")
-        for team in teams:
-            print("\t", team.get("team", {}).get("name"))
-        exit(1)
-
-    if args.goals:
-        goal: Goal = client.goals(team.id, include_progress=True)
+    elif args.command == "goals":
+        goal: Goal = client.goals(args.team_id, include_progress=True)
         print(goal)
 
-    elif args.members:
-        members: List[Member] = list(client.members(team.id))
+    elif args.command == "members":
+        members: List[Member] = list(client.members(args.team_id))
         for member in members:
             print(member)
 
-    elif args.leaderboard:
-        leaderboard: List[MemberStats] = client.leaderboard(team.id)
+    elif args.command == "leaderboard":
+        leaderboard: List[MemberStats] = client.leaderboard(args.team_id)
         for member in leaderboard:
-            print(f"#{member.rank}", member)
+            print(member)
 
-    elif args.feed:
-        feed: List[Activity] = list(client.feed(team.id))
+    elif args.command == "feed":
+        feed: List[Activity] = list(client.feed(args.team_id))
         for activity in feed:
             print(activity)
 
