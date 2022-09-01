@@ -4,12 +4,29 @@ from typing import Optional
 
 
 @dataclass
+class User:
+    id: str
+    age: Optional[int]
+    created: datetime
+    email: str
+    first_name: str
+    gender: Optional[str]
+    last_name: str
+    phone: str
+    icon: str
+    code: str
+    timezone: str
+    username: str
+    state: str
+
+
+@dataclass
 class Team:
     id: str
     name: str
     code: str
     icon: str
-    created: datetime
+    created: Optional[datetime]
     member_count: int
 
 
