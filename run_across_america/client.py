@@ -34,6 +34,17 @@ class RunAcrossAmerica:
 
     def teams(self, user_id: str) -> Iterator[Team]:
         url: str = f"{self.BASE_URL}/users/{user_id}/raceteams"
+
+    def user(self, user_id: str) -> Any:
+        url: str = f"{self.BASE_URL}/users/{user_id}"
+        resp: Response = self.session.get(url)
+    
+    def all_teams(self) -> Any:
+        url: str = f"{self.BASE_URL}/raceteams"
+        resp: Response = self.session.get(url)
+
+    def teams(self, user_id: str) -> Iterator[Team]:
+        url: str = f"{self.BASE_URL}/users/{user_id}/raceteams"
         resp: Response = self.session.get(url)
 
         data = resp.json()
