@@ -102,6 +102,8 @@ def main() -> None:
         feed: List[Activity] = list(client.feed(args.team_id))
         for activity in feed:
             print(activity)
+    else:
+        parser.print_help()
 
 
 if __name__ == "__main__":
