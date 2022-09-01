@@ -5,11 +5,6 @@ from requests import Session, Response
 from .models import Goal, Member, MemberStats, Team, Activity, User
 
 
-import urllib3
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-
 class RunAcrossAmerica:
     BASE_URL: str = "https://runprod.cockpitmobile.com"
 
@@ -21,9 +16,6 @@ class RunAcrossAmerica:
             "is-virtual-client": "true",
             "ios-version": "1.0.74",
         }
-
-        self.session.proxies = {"http": "127.0.0.1:8888", "https": "127.0.0.1:8888"}
-        self.session.verify = False
 
     def _authenticate(self, user_code: str) -> Dict[str, Any]:
         url: str = f"{self.BASE_URL}/authenticate"
