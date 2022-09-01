@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Iterator, List, Optional
 from requests import Session, Response
 
-from .models import Goal, Member, MemberStats, Team, Activity
+from .models import Goal, Member, MemberStats, Team, Activity, User
 
 
 class RunAcrossAmerica:
@@ -32,16 +32,51 @@ class RunAcrossAmerica:
         resp: Dict[str, Any] = self._authenticate(user_code)
         return resp.get("user", {}).get("id")
 
-    def teams(self, user_id: str) -> Iterator[Team]:
-        url: str = f"{self.BASE_URL}/users/{user_id}/raceteams"
-
-    def user(self, user_id: str) -> Any:
+    def user(self, user_id: str) -> User:
         url: str = f"{self.BASE_URL}/users/{user_id}"
         resp: Response = self.session.get(url)
-    
+        data = resp.json()
+
+        return User(
+            id=data.get("id"),
+            age=data.get("age"),
+            created=datetime.strptime(
+                data.get("creation_date", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
+            ),
+            email=data.get("email"),
+            first_name=data.get("first_name"),
+            last_name=data.get("last_name"),
+            gender=data.get("gender"),
+            phone=data.get("phone"),
+            icon=data.get("profile_photo_link"),
+            code=data.get("user_setup_passcode"),
+            timezone=data.get("user_timezone"),
+            username=data.get("username"),
+            state=data.get("state"),
+        )
+
+    def _parse_team(self, data: Dict[str, Any]) -> Team:
+        inner: Dict[str, Any] = data.get("team", {})
+
+        created: Optional[datetime] = None
+        if inner.get("creation_time"):
+            created = datetime.strptime(inner["creation_time"], "%Y-%m-%dT%H:%M:%S.%fZ")
+
+        return Team(
+            id=inner.get("id"),
+            name=inner.get("name"),
+            code=inner.get("code"),
+            icon=inner.get("icon"),
+            created=created,
+            member_count=int(data.get("memberCount", "0")),
+        )
+
     def all_teams(self) -> Any:
         url: str = f"{self.BASE_URL}/raceteams"
         resp: Response = self.session.get(url)
+        data = resp.json()
+        for item in data:
+            yield self._parse_team(item)
 
     def teams(self, user_id: str) -> Iterator[Team]:
         url: str = f"{self.BASE_URL}/users/{user_id}/raceteams"
@@ -49,18 +84,7 @@ class RunAcrossAmerica:
 
         data = resp.json()
         for item in data.get("race_teams", []):
-            inner: Dict[str, Any] = item.get("team", {})
-
-            yield Team(
-                id=inner.get("id"),
-                name=inner.get("name"),
-                code=inner.get("code"),
-                icon=inner.get("icon"),
-                created=datetime.strptime(
-                    inner.get("creation_time", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
-                ),
-                member_count=int(item.get("memberCount", "0")),
-            )
+            yield self._parse_team(item)
 
     def goals(self, team_id: str, include_progress: bool = True) -> Goal:
         url: str = f"{self.BASE_URL}/raceteams/{team_id}/goals"

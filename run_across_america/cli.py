@@ -1,8 +1,15 @@
 import argparse
 from typing import List
 
-from run_across_america import RunAcrossAmerica, Team, Activity, Goal, Member
-from run_across_america.models import MemberStats
+from run_across_america import (
+    RunAcrossAmerica,
+    Team,
+    Activity,
+    Goal,
+    Member,
+    MemberStats,
+    User,
+)
 
 
 def main() -> None:
@@ -20,6 +27,12 @@ def main() -> None:
         "user_code",
         help="User invitation code emailed after sign-up.",
     )
+
+    user_parser = subparsers.add_parser(
+        "user",
+        help="Get info about a user.",
+    )
+    user_parser.add_argument("user_id")
 
     teams_parser = subparsers.add_parser(
         "teams",
@@ -59,8 +72,15 @@ def main() -> None:
         user_id: str = client.user_id(args.user_code)
         print(user_id)
 
+    elif args.command == "user":
+        user: User = client.user(args.user_id)
+        print(user)
+
     elif args.command == "teams":
-        teams: List[Team] = list(client.teams(args.user_id))
+        if args.user_id == "-":
+            teams: List[Team] = list(client.all_teams())
+        else:
+            teams: List[Team] = list(client.teams(args.user_id))
         for team in teams:
             print(team)
 

@@ -26,7 +26,7 @@ class Team:
     name: str
     code: str
     icon: str
-    created: datetime
+    created: Optional[datetime]
     member_count: int
 
 
