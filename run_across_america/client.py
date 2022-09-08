@@ -113,16 +113,29 @@ class RunAcrossAmerica:
         return resp.json().get("distance")
 
     def members(self, team_id: str) -> Iterator[Member]:
-        url: str = f"{self.BASE_URL}/raceteams/{team_id}/members?limit=1000&offset=0"
-        resp: Response = self.session.get(url)
+        def get_members(limit: int, offset: int) -> Response:
+            url: str = f"{self.BASE_URL}/raceteams/{team_id}/members?limit={limit}&offset={offset}"
+            return self.session.get(url)
 
-        for item in resp.json():
-            yield Member(
-                id=item.get("user_id"),
-                email=item.get("email"),
-                first_name=item.get("first_name"),
-                last_name=item.get("last_name"),
-            )
+        limit: int = 1000
+        offset: int = 0
+        while True:
+            resp: Response = get_members(limit, offset)
+
+            num_members: int = 0
+            for item in resp.json():
+                yield Member(
+                    id=item.get("user_id"),
+                    email=item.get("email"),
+                    first_name=item.get("first_name"),
+                    last_name=item.get("last_name"),
+                )
+                num_members += 1
+            
+            if num_members == limit:
+                offset += limit
+            else:
+                break
 
     def leaderboard(self, team_id: str) -> List[MemberStats]:
         url: str = (
