@@ -70,7 +70,7 @@ class RunAcrossAmerica:
             member_count=int(data.get("memberCount", "0")),
         )
 
-    def all_teams(self) -> Any:
+    def all_teams(self) -> Iterator[Team]:
         url: str = f"{self.BASE_URL}/raceteams"
         resp: Response = self.session.get(url)
         data = resp.json()
